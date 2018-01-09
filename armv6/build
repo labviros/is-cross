@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker build -t viros/is-cpp:1-armv6 .
