@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# one-liner which will give you the full directory name of the script no matter where it is being called from.
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+docker run -ti -v $DIR:/opt -w /opt dockcross/linux-armv6 ./compile
+
+cd $DIR/install
+tar czf kernel.tgz lib/ boot/ 

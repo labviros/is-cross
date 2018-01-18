@@ -1,0 +1,4 @@
+linux/
+install/boot
+install/lib
+install/kernel.tgz

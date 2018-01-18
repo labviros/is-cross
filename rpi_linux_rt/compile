@@ -1,0 +1,58 @@
+#!/bin/bash
+
+### Run the following command if you want to choose a different branch
+# git ls-remote --heads https://github.com/raspberrypi/linux.git # show the branches
+BRANCH=rpi-4.9.y
+### Next, patch the kernel with the RT Preempt patch. 
+# Choose the patch matching your kernel version. 
+PATCH=4.9/patch-4.9.76-rt61
+### Choose "kernel" for Raspberry Pi Model A(+), B(+), Zero or "kernel7" for Raspberry Pi 2/3 Model B
+export KERNEL=kernel
+
+echo '>>>>>>> Downloading kernel... '
+git clone -b $BRANCH --single-branch --depth 1 https://github.com/raspberrypi/linux.git
+cd linux
+
+echo '>>>>>>> Downloading patch... '
+wget https://www.kernel.org/pub/linux/kernel/projects/rt/$PATCH.patch.gz
+
+PATCH_FILE=`echo $PATCH | cut -d '/' -f 2`.patch.gz
+echo '>>>>>>> Patching kernel... ' $PATCH_FILE
+zcat $PATCH_FILE | patch -p1
+
+export ARCH=arm
+export CROSS_COMPILE=/usr/bin/arm-linux-gnueabihf-
+export INSTALL_MOD_PATH=/opt/install
+
+if [ $KERNEL == 'kernel' ]; then
+  echo '>>>>>> Building for Raspberry Pi Model A(+), B(+), Zero'
+  make bcmrpi_defconfig
+fi
+
+if [ $KERNEL == 'kernel7' ]; then
+  echo '>>>>>> Building for Raspberry Pi 2/3 Model B'
+  make bcm2709_defconfig
+fi
+
+RED='\033[0;31m'
+NOCOLOR='\033[0m'
+
+printf "${RED} You will now see a configuration menu!!!\n"
+printf "\tEnable the settings you want to be built\n\n"
+printf "\t TO ENABLE RT_PREEMPT GO TO:\n"
+printf "\t\t Enable Kernel Features → Preemption Model → Fully Preemptible Kernel (RT)\n"
+printf "\n\n ${NOCOLOR}"
+
+read -p "Press enter to continue..."
+ 
+make menuconfig
+
+make zImage -j `nproc`
+make modules -j `nproc`
+make dtbs -j `nproc`
+make modules_install -j `nproc`
+
+mkdir $INSTALL_MOD_PATH/boot
+./scripts/mkknlimg ./arch/arm/boot/zImage $INSTALL_MOD_PATH/boot/$KERNEL.img
+cp ./arch/arm/boot/dts/*.dtb $INSTALL_MOD_PATH/boot/
+cp -r ./arch/arm/boot/dts/overlays $INSTALL_MOD_PATH/boot

@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e 
+
+# one-liner which will give you the full directory name of the script no matter where it is being called from.
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+echo 'Enter raspberry pi ssh uri: ( i.e. pi@raspberrypi.local )'
+read pi
+
+echo 'Copying files...'
+scp $DIR/kernel.tgz $DIR/update $pi:
+
+echo 'Installing...'
+ssh $pi -t ./update 

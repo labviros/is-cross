@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+tar xzf kernel.tgz
+
+sudo rm -r /lib/firmware/
+sudo rm -r /boot/overlays/
+
+echo 'Copying boot files...'
+cd boot
+sudo cp --verbose -rd * /boot/
+
+echo 'Copying lib files...'
+cd ../lib
+sudo cp --verbose -dr * /lib/
+
+echo 'Rebooting...'
+sudo reboot
